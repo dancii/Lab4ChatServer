@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import com.cardan.bo.Message;
 
@@ -20,6 +21,7 @@ public class MessageDb extends Message{
 
 	public static boolean saveMessage(String message, String fromEmail, String toEmail){
 		
+		System.out.println("Message save fromMail, toMail, Message: "+fromEmail+" "+toEmail+" "+message);
 		boolean result = false;
 		Statement stmt=null;
 		String searchQuery="INSERT INTO Messages(message,fromEmail,toEmail) VALUES(?,?,?)";
@@ -66,23 +68,25 @@ public class MessageDb extends Message{
 	}
 	
 	public static ArrayList<Message> getAllMessages(String fromEmail, String toEmail){
+		
 		ArrayList<Message> allMessages = new ArrayList<Message>();
 		boolean result = false;
 		Statement stmt=null;
 		rs = null;
-		String searchQuery="SELECT * FROM Messages WHERE fromEmail='"+fromEmail+"' AND toEmail='"+toEmail+"' OR fromEmail='"+toEmail+"' AND toEmail='"+fromEmail+"' LIMIT 20 ORDER BY id DESC";
+		String searchQuery="SELECT * FROM Messages WHERE ((fromEmail='"+fromEmail+"' AND toEmail='"+toEmail+"') OR (fromEmail='"+toEmail+"' AND toEmail='"+fromEmail+"')) ORDER BY id DESC LIMIT 20";
 		try{
 			dbManager=DbManager.checkInstance();
 			con=dbManager.getFreeConnection();
 			stmt=con.createStatement();
 			rs=stmt.executeQuery(searchQuery);
 			
-			boolean more = rs.next();
 			
-			while(more){
+			while(rs.next()){
+				System.out.println("Found message: "+rs.getString("fromEmail")+" "+rs.getString("toEmail")+" "+rs.getString("message"));
 				allMessages.add(new Message(rs.getInt("id"), rs.getString("message"), rs.getString("fromEmail"), rs.getString("toEmail")));
 			}
-
+			Collections.reverse(allMessages);
+			
 		}catch(Exception e){
 
 		}finally{

@@ -251,26 +251,26 @@ public static String registerConvo(String fromUsername, String toUsername){
 			
 			System.out.println("Count rows: "+rs.getRow());
 
-			/*do{
+			do{
 				if(rs.getString("username").equalsIgnoreCase(username)){
-					
+					System.out.println("found: "+rs.getString("username"));
 				}else{
 					convos.add(new User(rs.getInt("id"), rs.getString("username"), rs.getString("androidChatId")));
 					System.out.println("Username: "+rs.getString("username"));
 					count++;
 				}
 				
-			}while(rs.next());*/
+			}while(rs.next());
 			
-			while(rs.next()){
+			/*while(rs.next()){
 				if(rs.getString("username").equalsIgnoreCase(username)){
-									
+					System.out.println("found: "+rs.getString("username"));
 				}else{
 					convos.add(new User(rs.getInt("id"), rs.getString("username"), rs.getString("androidChatId")));
 					System.out.println("Username: "+rs.getString("username"));
 					count++;
 				}
-			}
+			}*/
 			
 			System.out.println("count:" + count);
 			

@@ -67,7 +67,7 @@ public class AuthServlet extends HttpServlet {
 				System.out.println(json);
 				out.println(json);
 			}
-		}else if(checkReq.equalsIgnoreCase("saveMessage")){
+		}else if(checkReq.equalsIgnoreCase("sendMessage")){
 			String message = request.getParameter("message");
 			String fromEmail = request.getParameter("fromEmail");
 			String toEmail = request.getParameter("toEmail");
