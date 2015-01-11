@@ -306,5 +306,110 @@ public static String registerConvo(String fromUsername, String toUsername){
 	}
 	
 	
+	public static ArrayList<User> pendingFriendRequest(String email){
+		ArrayList<User> convos = new ArrayList<User>();
+		String result = "";
+		Statement stmt=null;
+		rs = null;
+		String searchQuery="SELECT * FROM (Users JOIN Conversations on username = fromEmail) WHERE toEmail='"+email+"' AND isAccepted=0";
+		
+		try{
+			dbManager=DbManager.checkInstance();
+			con=dbManager.getFreeConnection();
+			stmt=con.createStatement();
+			rs=stmt.executeQuery(searchQuery);
+			
+			boolean more = rs.next();
+			
+			int count = 0;
+			
+			System.out.println("Count rows: "+rs.getRow());
+
+			do{
+				convos.add(new User(rs.getInt("id"), rs.getString("username"), rs.getString("androidChatId")));
+				System.out.println("Username: "+rs.getString("username"));
+				count++;
+			}while(rs.next());
+			
+			System.out.println("count:" + count);
+		}catch(Exception e){
+
+		}finally{
+		    if (rs != null)	{
+	            try {
+	               rs.close();
+	            } catch (Exception e) {}
+	               rs = null;
+		    }
+		    
+		    if (stmt != null) {
+	            try {
+	               stmt.close();
+	            } catch (Exception e) {}
+	               stmt = null;
+            }
+		    
+		    if (con != null) {
+	            try {
+	            	dbManager.returnBusyConnection(con);
+	            } catch (Exception e) {
+	            
+	            }
+	            con = null;
+	        }
+		}
+		
+		return convos;
+	}
+	
+	public static void acceptPendingFriend(String email, String friendEmail){
+		Statement stmt=null;
+		rs = null;
+		String searchQuery="SELECT * FROM Conversations WHERE fromEmail='"+friendEmail+"' AND toEmail='"+email+"'";
+		
+		try{
+			dbManager=DbManager.checkInstance();
+			con=dbManager.getFreeConnection();
+			stmt=con.createStatement();
+			rs=stmt.executeQuery(searchQuery);
+			
+			boolean more = rs.next();
+			
+			int count = 0;
+			
+			System.out.println("Count rows: "+rs.getRow());
+
+			do{
+				rs.updateBoolean("isAccepted", true);
+			}while(rs.next());
+			
+			System.out.println("count:" + count);
+		}catch(Exception e){
+
+		}finally{
+		    if (rs != null)	{
+	            try {
+	               rs.close();
+	            } catch (Exception e) {}
+	               rs = null;
+		    }
+		    
+		    if (stmt != null) {
+	            try {
+	               stmt.close();
+	            } catch (Exception e) {}
+	               stmt = null;
+            }
+		    
+		    if (con != null) {
+	            try {
+	            	dbManager.returnBusyConnection(con);
+	            } catch (Exception e) {
+	            
+	            }
+	            con = null;
+	        }
+		}
+	}
 	
 }

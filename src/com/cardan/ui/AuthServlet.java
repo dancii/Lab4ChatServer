@@ -88,6 +88,8 @@ public class AuthServlet extends HttpServlet {
 				String json = gson.toJson(allMessages);
 				out.print(json);
 			}
+		}else if(checkReq.equalsIgnoreCase("addRoom")){
+			
 		}
 	}
 
