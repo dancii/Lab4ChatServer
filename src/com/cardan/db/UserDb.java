@@ -237,7 +237,7 @@ public static String registerConvo(String fromUsername, String toUsername){
 		String result = "";
 		Statement stmt=null;
 		rs = null;
-		String searchQuery="SELECT * FROM (Users JOIN Conversations on username = toEmail OR username = fromEmail) WHERE fromEmail='"+username+"' OR toEmail='"+username+"'";
+		String searchQuery="SELECT * FROM (Users JOIN Conversations on username = toEmail OR username = fromEmail) WHERE (fromEmail='"+username+"' OR toEmail='"+username+"') AND isAccepted=1";
 		
 		try{
 			dbManager=DbManager.checkInstance();
@@ -261,16 +261,6 @@ public static String registerConvo(String fromUsername, String toUsername){
 				}
 				
 			}while(rs.next());
-			
-			/*while(rs.next()){
-				if(rs.getString("username").equalsIgnoreCase(username)){
-					System.out.println("found: "+rs.getString("username"));
-				}else{
-					convos.add(new User(rs.getInt("id"), rs.getString("username"), rs.getString("androidChatId")));
-					System.out.println("Username: "+rs.getString("username"));
-					count++;
-				}
-			}*/
 			
 			System.out.println("count:" + count);
 			
@@ -306,12 +296,12 @@ public static String registerConvo(String fromUsername, String toUsername){
 	}
 	
 	
-	public static ArrayList<User> pendingFriendRequest(String email){
-		ArrayList<User> convos = new ArrayList<User>();
+	public static ArrayList<String> pendingFriendRequest(String email){
+		ArrayList<String> pendingRequests = new ArrayList<String>();
 		String result = "";
 		Statement stmt=null;
 		rs = null;
-		String searchQuery="SELECT * FROM (Users JOIN Conversations on username = fromEmail) WHERE toEmail='"+email+"' AND isAccepted=0";
+		String searchQuery="SELECT * FROM Conversations WHERE toEmail='"+email+"' AND isAccepted=0";
 		
 		try{
 			dbManager=DbManager.checkInstance();
@@ -326,8 +316,8 @@ public static String registerConvo(String fromUsername, String toUsername){
 			System.out.println("Count rows: "+rs.getRow());
 
 			do{
-				convos.add(new User(rs.getInt("id"), rs.getString("username"), rs.getString("androidChatId")));
-				System.out.println("Username: "+rs.getString("username"));
+				pendingRequests.add(rs.getString("fromEmail"));
+				System.out.println("Username: "+rs.getString("fromEmail"));
 				count++;
 			}while(rs.next());
 			
@@ -359,7 +349,7 @@ public static String registerConvo(String fromUsername, String toUsername){
 	        }
 		}
 		
-		return convos;
+		return pendingRequests;
 	}
 	
 	public static void acceptPendingFriend(String email, String friendEmail){
@@ -370,7 +360,7 @@ public static String registerConvo(String fromUsername, String toUsername){
 		try{
 			dbManager=DbManager.checkInstance();
 			con=dbManager.getFreeConnection();
-			stmt=con.createStatement();
+			stmt=con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_UPDATABLE);
 			rs=stmt.executeQuery(searchQuery);
 			
 			boolean more = rs.next();
@@ -378,14 +368,67 @@ public static String registerConvo(String fromUsername, String toUsername){
 			int count = 0;
 			
 			System.out.println("Count rows: "+rs.getRow());
-
-			do{
+			System.out.println(rs.getString("fromEmail"));
+			System.out.println(rs.getBoolean("isAccepted"));
+			rs.beforeFirst();
+			while(rs.next()){
 				rs.updateBoolean("isAccepted", true);
-			}while(rs.next());
+				rs.updateRow();
+			}
 			
-			System.out.println("count:" + count);
 		}catch(Exception e){
-
+			System.out.println("ERROR: "+e);
+		}finally{
+		    if (rs != null)	{
+	            try {
+	               rs.close();
+	            } catch (Exception e) {}
+	               rs = null;
+		    }
+		    
+		    if (stmt != null) {
+	            try {
+	               stmt.close();
+	            } catch (Exception e) {}
+	               stmt = null;
+            }
+		    
+		    if (con != null) {
+	            try {
+	            	dbManager.returnBusyConnection(con);
+	            } catch (Exception e) {
+	            
+	            }
+	            con = null;
+	        }
+		}
+	}
+	
+	public static void declineFriendRequest(String email, String friendEmail){
+		Statement stmt=null;
+		rs = null;
+		String searchQuery="SELECT * FROM Conversations WHERE fromEmail='"+friendEmail+"' AND toEmail='"+email+"'";
+		
+		try{
+			dbManager=DbManager.checkInstance();
+			con=dbManager.getFreeConnection();
+			stmt=con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_UPDATABLE);
+			rs=stmt.executeQuery(searchQuery);
+			
+			boolean more = rs.next();
+			
+			int count = 0;
+			
+			System.out.println("Count rows: "+rs.getRow());
+			System.out.println(rs.getString("fromEmail"));
+			System.out.println(rs.getBoolean("isAccepted"));
+			rs.beforeFirst();
+			while(rs.next()){
+				rs.deleteRow();
+			}
+			
+		}catch(Exception e){
+			System.out.println("ERROR: "+e);
 		}finally{
 		    if (rs != null)	{
 	            try {

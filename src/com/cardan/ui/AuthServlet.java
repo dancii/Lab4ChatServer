@@ -11,7 +11,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.cardan.bo.Message;
+import com.cardan.bo.Room;
 import com.cardan.bo.User;
+import com.cardan.db.RoomDb;
 import com.google.gson.Gson;
 
 /**
@@ -67,6 +69,27 @@ public class AuthServlet extends HttpServlet {
 				System.out.println(json);
 				out.println(json);
 			}
+		}else if(checkReq.equalsIgnoreCase("getPendingFriendRequest")){
+			String username = request.getParameter("username");
+			ArrayList<String> result = User.pendingFriendRequest(username);
+			if(result.isEmpty()){
+				out.print("notfound");
+			}else{
+				Gson gson = new Gson();
+				String json = gson.toJson(result);
+				System.out.println(json);
+				out.println(json);
+			}
+		}else if(checkReq.equalsIgnoreCase("acceptPendingFriend")){
+			String username = request.getParameter("username");
+			String fromEmail = request.getParameter("fromEmail");
+			User.acceptPendingFriend(username,fromEmail);
+			
+		}else if(checkReq.equalsIgnoreCase("declinePendingFriend")){
+			String username= request.getParameter("username");
+			String fromEmail= request.getParameter("fromEmail");
+			User.declineFriendRequest(username, fromEmail);
+			
 		}else if(checkReq.equalsIgnoreCase("sendMessage")){
 			String message = request.getParameter("message");
 			String fromEmail = request.getParameter("fromEmail");
@@ -88,8 +111,55 @@ public class AuthServlet extends HttpServlet {
 				String json = gson.toJson(allMessages);
 				out.print(json);
 			}
-		}else if(checkReq.equalsIgnoreCase("addRoom")){
+		}else if(checkReq.equalsIgnoreCase("createJoinRoom")){
+			boolean result = false;
+			String roomName= request.getParameter("roomName");
+			String username= request.getParameter("username");
+			String createJoinState = request.getParameter("createJoinState");
+			if(createJoinState.equalsIgnoreCase("join")){
+				result = Room.addRoomMember(roomName,username);
+				if(result){
+					out.print("Joining");
+				}else{
+					out.print("roomNotExist");
+				}
+			}else{
+				result = Room.addRoom(roomName, username);
+				if(result){
+					result = Room.addRoomMember(roomName, username);
+					if(result){
+						out.print("roomCreated");
+					}
+					
+				}
+			}
 			
+			
+		}else if(checkReq.equalsIgnoreCase("getAllRooms")){
+			String username= request.getParameter("username");
+			ArrayList<String> result = RoomDb.getAllRoomsUserMemberIn(username);
+			if(result.isEmpty()){
+				out.print("noRoomsMember");
+			}else{
+				Gson gson = new Gson();
+				out.print(gson.toJson(result));
+			}
+		}else if(checkReq.equalsIgnoreCase("sendMessageToRoom")){
+			String roomName= request.getParameter("roomName");
+			String username= request.getParameter("username");
+			String message= request.getParameter("messageToRoom");
+			Room.saveRoomMessage(roomName, username, message);
+			
+		}else if(checkReq.equalsIgnoreCase("getAllRoomMessages")){
+			String roomName = request.getParameter("roomName");
+			ArrayList<Room> roomMessages = Room.getAllRoomMessages(roomName);
+			if(roomMessages.isEmpty()){
+				out.print("noRoomMessages");
+			}else{
+				Gson gson = new Gson();
+				out.print(gson.toJson(roomMessages));
+				
+			}
 		}
 	}
 
