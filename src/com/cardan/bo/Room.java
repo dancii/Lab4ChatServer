@@ -72,4 +72,7 @@ public class Room {
 		return RoomDb.getAllRoomMessages(roomName);
 	}
 	
+	public static ArrayList<String> getAllRoomMembersWeb(String roomName){
+		return RoomDb.getAllRoomMembersWeb(roomName);
+	}
 }

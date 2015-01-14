@@ -69,4 +69,11 @@ public class User {
 		UserDb.declineFriendRequest(email, friendEmail);
 	}
 	
+	public static int registerToDbWebApp(String username){
+		return UserDb.registerToDbWebApp(username);
+	}
+	
+	public static String findRegId(String username){
+		return UserDb.findRegId(username);
+	}
 }

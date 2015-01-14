@@ -68,6 +68,61 @@ public class UserDb extends User{
 		 
 	}
 	
+public static int registerToDbWebApp(String username){
+		
+		rs = null;
+		
+		System.out.println("Username trying to register: "+username);
+		boolean userExists = checkEmailLegit(username);
+		
+		System.out.println("User found result: "+userExists);
+		
+		if(userExists == false){
+			
+			Statement stmt=null;
+			String searchQuery="INSERT INTO Users(username) VALUES(?)";
+			
+			try{
+				dbManager=DbManager.checkInstance();
+				con=dbManager.getFreeConnection();
+				PreparedStatement preStmt=con.prepareStatement(searchQuery);
+				preStmt.setString(1, username);
+				preStmt.executeUpdate();
+				
+			}catch(Exception e){
+				System.out.println("ERROR: "+e);
+			}finally{
+			    if (rs != null)	{
+		            try {
+		               rs.close();
+		            } catch (Exception e) {}
+		               rs = null;
+			    }
+			    
+			    if (stmt != null) {
+		            try {
+		               stmt.close();
+		            } catch (Exception e) {}
+		               stmt = null;
+	            }
+			    
+			    if (con != null) {
+		            try {
+		            	dbManager.returnBusyConnection(con);
+		            } catch (Exception e) {
+		            
+		            }
+		            con = null;
+		        }
+			}
+			return 1;
+		}else{
+			
+			return 0;
+			
+		}
+}
+	
 	public static int registerToDbAndroid(String username, String androidChatId){
 		
 		rs = null;
@@ -453,6 +508,50 @@ public static String registerConvo(String fromUsername, String toUsername){
 	            con = null;
 	        }
 		}
+	}
+	
+	public static String findRegId(String username){
+		String result ="";
+		Statement stmt=null;
+		rs = null;
+		String searchQuery="SELECT * FROM Users WHERE username='"+username+"'";
+		try{
+			dbManager=DbManager.checkInstance();
+			con=dbManager.getFreeConnection();
+			stmt=con.createStatement();
+			rs=stmt.executeQuery(searchQuery);
+			rs.beforeFirst();
+			while(rs.next()){
+				result = rs.getString("androidChatId");
+			}
+			
+		}catch(Exception e){
+
+		}finally{
+		    if (rs != null)	{
+	            try {
+	               rs.close();
+	            } catch (Exception e) {}
+	               rs = null;
+		    }
+		    
+		    if (stmt != null) {
+	            try {
+	               stmt.close();
+	            } catch (Exception e) {}
+	               stmt = null;
+            }
+		    
+		    if (con != null) {
+	            try {
+	            	dbManager.returnBusyConnection(con);
+	            } catch (Exception e) {
+	            
+	            }
+	            con = null;
+	        }
+		}
+		return result;
 	}
 	
 }

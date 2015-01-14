@@ -412,4 +412,59 @@ public class RoomDb extends Room{
 		return convos;
 	}
 	
+	public static ArrayList<String> getAllRoomMembersWeb(String roomName){
+		ArrayList<String> getAllRoomMembers = new ArrayList<String>();
+		
+		Statement stmt=null;
+		rs = null;
+		String searchQuery="SELECT * FROM RoomMembers WHERE roomName = '"+roomName+"'";
+		
+		try{
+			dbManager=DbManager.checkInstance();
+			con=dbManager.getFreeConnection();
+			stmt=con.createStatement();
+			rs=stmt.executeQuery(searchQuery);
+			
+			int count = 0;
+			
+			System.out.println("Count rows: "+rs.getRow());
+			rs.beforeFirst();
+			while(rs.next()){
+				getAllRoomMembers.add(rs.getString("username"));
+				System.out.println("Username: "+rs.getString("username"));
+				count++;
+			}
+			
+			System.out.println("count:" + count);
+			
+		}catch(Exception e){
+			System.out.println("getAllRoomMembers ERROR: "+e);
+		}finally{
+		    if (rs != null)	{
+	            try {
+	               rs.close();
+	            } catch (Exception e) {}
+	               rs = null;
+		    }
+		    
+		    if (stmt != null) {
+	            try {
+	               stmt.close();
+	            } catch (Exception e) {}
+	               stmt = null;
+            }
+		    
+		    if (con != null) {
+	            try {
+	            	dbManager.returnBusyConnection(con);
+	            } catch (Exception e) {
+	            
+	            }
+	            con = null;
+	        }
+		}
+		
+		return getAllRoomMembers;
+	}
+	
 }

@@ -10,9 +10,11 @@
 %>
 <head>
 <title>Google Cloud Messaging (GCM) Server in PHP</title>
+<script src="https://apis.google.com/js/client:platform.js" async defer></script>
 </head>
 <body>
 
+</script>
 	<h1>Google Cloud Messaging (GCM) Server in Java</h1>
 
 	<form action="GCMNotification" method="post">

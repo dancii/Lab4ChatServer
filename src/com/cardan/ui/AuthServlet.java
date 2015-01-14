@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.cardan.bo.Message;
 import com.cardan.bo.Room;
@@ -45,9 +47,144 @@ public class AuthServlet extends HttpServlet {
 		// TODO Auto-generated method stub
 		String checkReq = request.getParameter("checkReq");
 		PrintWriter out = response.getWriter();
+		HttpSession session = request.getSession();
 		
-		
-		if(checkReq.equalsIgnoreCase("registerAccAndroid")){
+		if(checkReq.equalsIgnoreCase("registerAccWebApp")){
+			
+			String username = request.getParameter("username");
+			int result = User.registerToDbWebApp(username);
+			session.setAttribute("loggedIn", username);
+			System.out.println("Result: "+result);
+			response.sendRedirect("welcome.jsp");
+			
+		}else if(checkReq.equalsIgnoreCase("registerConvoWebApp")){
+			String fromUsername = (String) session.getAttribute("loggedIn");
+			String toUsername = request.getParameter("toUsername");
+			String result = User.registerConvo(fromUsername, toUsername);
+			out.println(result);
+			RequestDispatcher rd = request.getRequestDispatcher("/friends.jsp");
+			rd.forward(request, response);
+		}else if(checkReq.equalsIgnoreCase("getAllConvosWebApp")){
+			String username = (String)session.getAttribute("loggedIn");
+			ArrayList<User> resultAllConvos = User.getAllConvos(username);
+			ArrayList<String> resultPendingFriendReq = User.pendingFriendRequest(username);
+			request.setAttribute("allConvos", resultAllConvos);
+			request.setAttribute("pendingFriendReq", resultPendingFriendReq);
+			RequestDispatcher rd = request.getRequestDispatcher("/friends.jsp");
+			rd.forward(request, response);
+		}else if(checkReq.equalsIgnoreCase("getPendingFriendRequestWebApp")){
+			String username = request.getParameter("username");
+			ArrayList<String> result = User.pendingFriendRequest(username);
+			if(result.isEmpty()){
+				out.print("notfound");
+			}else{
+				Gson gson = new Gson();
+				String json = gson.toJson(result);
+				System.out.println(json);
+				out.println(json);
+			}
+		}else if(checkReq.equalsIgnoreCase("acceptPendingFriendWebApp")){
+			String username = (String)session.getAttribute("loggedIn");
+			String fromEmail = request.getParameter("fromEmail");
+			User.acceptPendingFriend(username,fromEmail);
+			ArrayList<User> resultAllConvos = User.getAllConvos(username);
+			ArrayList<String> resultPendingFriendReq = User.pendingFriendRequest(username);
+			request.setAttribute("allConvos", resultAllConvos);
+			request.setAttribute("pendingFriendReq", resultPendingFriendReq);
+			RequestDispatcher rd = request.getRequestDispatcher("/friends.jsp");
+			rd.forward(request, response);
+		}else if(checkReq.equalsIgnoreCase("declinePendingFriendWebApp")){
+			String username= request.getParameter("username");
+			String fromEmail= request.getParameter("fromEmail");
+			User.declineFriendRequest(username, fromEmail);
+			ArrayList<User> resultAllConvos = User.getAllConvos(username);
+			ArrayList<String> resultPendingFriendReq = User.pendingFriendRequest(username);
+			request.setAttribute("allConvos", resultAllConvos);
+			request.setAttribute("pendingFriendReq", resultPendingFriendReq);
+			RequestDispatcher rd = request.getRequestDispatcher("/friends.jsp");
+			rd.forward(request, response);
+		}else if(checkReq.equalsIgnoreCase("sendMessageWebApp")){
+			System.out.println("TRYING TO SEND MESSAGE!!!");
+			String message = request.getParameter("message");
+			String fromEmail = request.getParameter("fromEmail");
+			String toEmail = request.getParameter("toEmail");
+			boolean result = Message.saveMessage(message, fromEmail, toEmail);
+			if(result){
+				out.print("ok");
+			}else{
+				out.print("error");
+			}
+		}else if(checkReq.equalsIgnoreCase("getAllMessagesWebApp")){
+			String fromEmail = request.getParameter("fromEmail");
+			String toEmail = request.getParameter("toEmail");
+			ArrayList<Message> allMessages = Message.getAllMessages(fromEmail, toEmail);
+			if(allMessages.isEmpty()){
+				out.print("notfound");
+			}else{
+				Gson gson = new Gson();
+				String json = gson.toJson(allMessages);
+				out.print(json);
+			}
+		}else if(checkReq.equalsIgnoreCase("joinRoomWebApp")){
+			boolean result = false;
+			String roomName= request.getParameter("roomName");
+			String username= (String)session.getAttribute("loggedIn");
+			result = Room.addRoomMember(roomName,username);
+			if(result){
+				out.print("Joining");
+			}else{
+				out.print("roomNotExist");
+			}
+
+		}else if(checkReq.equalsIgnoreCase("createRoomWebApp")){
+			boolean result = false;
+			String roomName= request.getParameter("roomName");
+			String username= (String)session.getAttribute("loggedIn");
+			result = Room.addRoom(roomName, username);
+			if(result){
+				result = Room.addRoomMember(roomName, username);
+				if(result){
+					out.print("roomCreated");
+				}
+				
+			}
+			
+		}else if(checkReq.equalsIgnoreCase("getAllRoomsWebApp")){
+			String username= (String) session.getAttribute("loggedIn");
+			ArrayList<String> result = RoomDb.getAllRoomsUserMemberIn(username);
+			if(result.isEmpty()){
+				result.add("You are not a member in any room");
+			}
+			request.setAttribute("allRooms", result);
+			RequestDispatcher rd = request.getRequestDispatcher("/rooms.jsp");
+			rd.forward(request, response);
+		}else if(checkReq.equalsIgnoreCase("sendMessageToRoomWebApp")){
+			String roomName= request.getParameter("roomName");
+			String username= request.getParameter("username");
+			String message= request.getParameter("messageToRoom");
+			Room.saveRoomMessage(roomName, username, message);
+			
+		}else if(checkReq.equalsIgnoreCase("getAllRoomMessagesWebApp")){
+			String roomName = request.getParameter("roomName");
+			ArrayList<Room> roomMessages = Room.getAllRoomMessages(roomName);
+			if(roomMessages.isEmpty()){
+				out.print("noRoomMessages");
+			}else{
+				Gson gson = new Gson();
+				out.print(gson.toJson(roomMessages));
+				
+			}
+		}else if(checkReq.equalsIgnoreCase("getAllRoomMembersWebApp")){
+			String roomName = request.getParameter("roomName");
+			ArrayList<User> allRoomMembers = Room.getAllRoomMembers(roomName);
+			if(allRoomMembers.isEmpty()){
+				out.print("No room members");
+			}else{
+				Gson gson = new Gson();
+				out.print(gson.toJson(allRoomMembers));
+			}
+			
+		}else if(checkReq.equalsIgnoreCase("registerAccAndroid")){ //Mobile server connection
 			String username = request.getParameter("username");
 			String androidChatId = request.getParameter("androidChatId");
 			System.out.println("Username: "+username+" ID: "+androidChatId);
@@ -133,8 +270,7 @@ public class AuthServlet extends HttpServlet {
 					
 				}
 			}
-			
-			
+
 		}else if(checkReq.equalsIgnoreCase("getAllRooms")){
 			String username= request.getParameter("username");
 			ArrayList<String> result = RoomDb.getAllRoomsUserMemberIn(username);
